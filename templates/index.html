@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockSight AI — ML Stock Price Predictor</title>
+  <meta name="description" content="Real-time AI-powered stock price prediction using LSTM, Random Forest, and ensemble models with technical indicators." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ── Animated Background ───────────────────────────────────────────── -->
+<div class="bg-grid"></div>
+<div class="bg-glow glow-1"></div>
+<div class="bg-glow glow-2"></div>
+<div class="bg-glow glow-3"></div>
+
+<!-- ── Header ───────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 30 L12 20 L18 25 L26 10 L35 18" stroke="url(#grad1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="35" cy="10" r="3" fill="#6366f1"/>
+          <defs>
+            <linearGradient id="grad1" x1="5" y1="30" x2="35" y2="10" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#06b6d4"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="logo-text">StockSight <span class="logo-ai">AI</span></span>
+    </div>
+
+    <nav class="nav-pills">
+      <button class="nav-btn active" data-tab="dashboard" id="nav-dashboard">Dashboard</button>
+      <button class="nav-btn" data-tab="predict" id="nav-predict">Predict</button>
+      <button class="nav-btn" data-tab="backtest" id="nav-backtest">Backtest</button>
+      <button class="nav-btn" data-tab="models" id="nav-models">Models</button>
+    </nav>
+
+    <div class="header-badge">
+      <span class="badge-dot"></span>
+      Live Data
+    </div>
+  </div>
+</header>
+
+<!-- ── Main ──────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- ── Ticker Selector ──────────────────────────────────────────── -->
+  <section class="ticker-section">
+    <div class="ticker-label">SELECT STOCK</div>
+    <div class="ticker-bar" id="ticker-bar">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- TAB: DASHBOARD                                                  -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <div class="tab-content active" id="tab-dashboard">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card" id="kpi-price">
+        <div class="kpi-label">Current Price</div>
+        <div class="kpi-value" id="kv-price">—</div>
+        <div class="kpi-sub" id="kv-date">Loading…</div>
+      </div>
+      <div class="kpi-card accent-green" id="kpi-pred">
+        <div class="kpi-label">AI Prediction (Next Day)</div>
+        <div class="kpi-value" id="kv-pred">—</div>
+        <div class="kpi-sub" id="kv-pred-date">—</div>
+      </div>
+      <div class="kpi-card accent-purple" id="kpi-change">
+        <div class="kpi-label">Expected Change</div>
+        <div class="kpi-value" id="kv-change">—</div>
+        <div class="kpi-sub">Ensemble Model</div>
+      </div>
+      <div class="kpi-card accent-cyan" id="kpi-confidence">
+        <div class="kpi-label">Model R² Score</div>
+        <div class="kpi-value" id="kv-r2">—</div>
+        <div class="kpi-sub">Ensemble accuracy</div>
+      </div>
+    </div>
+
+    <!-- Price Chart -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="title-icon">📈</span>
+          Price History &amp; Moving Averages
+        </div>
+        <div class="chart-controls">
+          <button class="range-btn active" data-days="90" id="r90">3M</button>
+          <button class="range-btn" data-days="180" id="r180">6M</button>
+          <button class="range-btn" data-days="365" id="r365">1Y</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="two-col">
+      <!-- RSI Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="title-icon">📊</span>RSI (14)</div>
+        </div>
+        <div class="chart-wrap chart-wrap-sm">
+          <canvas id="rsiChart"></canvas>
+        </div>
+      </div>
+
+      <!-- MACD Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="title-icon">📉</span>MACD</div>
+        </div>
+        <div class="chart-wrap chart-wrap-sm">
+          <canvas id="macdChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Volume Chart -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div class="card-title"><span class="title-icon">📦</span>Volume</div>
+      </div>
+      <div class="chart-wrap chart-wrap-sm">
+        <canvas id="volumeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- TAB: PREDICT                                                    -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <div class="tab-content" id="tab-predict">
+    <div class="predict-hero">
+      <h2 class="predict-title">Next-Day Price Forecast</h2>
+      <p class="predict-sub">Ensemble of LSTM, Random Forest &amp; Gradient Boosting models</p>
+    </div>
+
+    <div class="predict-grid" id="predict-cards">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="card mt-24">
+      <div class="card-header">
+        <div class="card-title"><span class="title-icon">🧠</span>Model Comparison</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="modelCompareChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- TAB: BACKTEST                                                   -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <div class="tab-content" id="tab-backtest">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="title-icon">🔬</span>Predicted vs Actual (Last 90 Days)</div>
+        <div id="backtest-status" class="status-badge">—</div>
+      </div>
+      <div class="chart-wrap chart-wrap-lg">
+        <canvas id="backtestChart"></canvas>
+      </div>
+    </div>
+
+    <div class="metrics-grid" id="backtest-metrics">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- TAB: MODELS                                                     -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <div class="tab-content" id="tab-models">
+    <div class="model-hero">
+      <h2 class="predict-title">Model Registry</h2>
+      <p class="predict-sub">Train, inspect, and manage ML models for each ticker</p>
+    </div>
+
+    <div class="models-grid" id="models-grid">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Architecture Info -->
+    <div class="card mt-24">
+      <div class="card-header">
+        <div class="card-title"><span class="title-icon">🏗️</span>Model Architecture</div>
+      </div>
+      <div class="arch-grid">
+        <div class="arch-card">
+          <div class="arch-icon">🧠</div>
+          <div class="arch-name">LSTM Network</div>
+          <div class="arch-desc">3-layer stacked LSTM (128→64→32 units) with BatchNorm + Dropout. 60-day look-back window. Huber loss, Adam optimizer.</div>
+          <div class="arch-weight">Weight: 50%</div>
+        </div>
+        <div class="arch-card">
+          <div class="arch-icon">🌲</div>
+          <div class="arch-name">Random Forest</div>
+          <div class="arch-desc">300 trees, max depth 10. Trained on 25+ technical features. Excellent for non-linear feature interactions.</div>
+          <div class="arch-weight">Weight: 30%</div>
+        </div>
+        <div class="arch-card">
+          <div class="arch-icon">⚡</div>
+          <div class="arch-name">Gradient Boosting</div>
+          <div class="arch-desc">300 estimators, depth 5, LR 0.05. Sequential residual correction. Robust to outliers and market shocks.</div>
+          <div class="arch-weight">Weight: 20%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Info -->
+    <div class="card mt-24">
+      <div class="card-header">
+        <div class="card-title"><span class="title-icon">⚙️</span>Feature Engineering (25+ indicators)</div>
+      </div>
+      <div class="feature-list">
+        <span class="feature-chip">SMA 10/20/50</span>
+        <span class="feature-chip">EMA 12/26/50</span>
+        <span class="feature-chip">MACD + Signal + Hist</span>
+        <span class="feature-chip">RSI (14)</span>
+        <span class="feature-chip">Bollinger Bands</span>
+        <span class="feature-chip">ATR (14)</span>
+        <span class="feature-chip">Volume SMA</span>
+        <span class="feature-chip">OBV</span>
+        <span class="feature-chip">Return 1d/5d/20d</span>
+        <span class="feature-chip">Log Return</span>
+        <span class="feature-chip">HL Ratio</span>
+        <span class="feature-chip">Momentum 10</span>
+        <span class="feature-chip">ROC 10</span>
+        <span class="feature-chip">Stochastic K/D</span>
+        <span class="feature-chip">OHLCV</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Toast Notification ────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Loading Overlay ───────────────────────────────────────────────── -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Loading…</div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
