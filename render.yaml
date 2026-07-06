@@ -10,7 +10,4 @@ services:
       - key: FLASK_DEBUG
         value: "false"
     autoDeploy: true
-    disk:
-      name: model-storage
-      mountPath: /opt/render/project/src/saved_models
-      sizeGB: 5
+
