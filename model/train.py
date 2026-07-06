@@ -173,7 +173,7 @@ def train_ticker(ticker: str) -> dict:
     # Save LSTM
     lstm_path = os.path.join(MODELS_DIR, f"{ticker}_lstm.keras")
     lstm_model.save(lstm_path)
-    print(f"[LSTM] Saved → {lstm_path}")
+    print(f"[LSTM] Saved -> {lstm_path}")
 
     # ── 2. Random Forest ──────────────────────────────────────────────────────
     print("\n[RF] Training Random Forest …")
@@ -195,7 +195,7 @@ def train_ticker(ticker: str) -> dict:
 
     rf_path = os.path.join(MODELS_DIR, f"{ticker}_rf.pkl")
     joblib.dump(rf_model, rf_path)
-    print(f"[RF]   Saved → {rf_path}")
+    print(f"[RF]   Saved -> {rf_path}")
 
     # ── 3. Gradient Boosting ──────────────────────────────────────────────────
     print("\n[GB] Training Gradient Boosting …")
@@ -243,7 +243,7 @@ def train_ticker(ticker: str) -> dict:
     meta_path = os.path.join(MODELS_DIR, f"{ticker}_meta.json")
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2)
-    print(f"\n✅ {ticker} training complete. Metadata → {meta_path}")
+    print(f"\n[OK] {ticker} training complete. Metadata -> {meta_path}")
     return meta
 
 

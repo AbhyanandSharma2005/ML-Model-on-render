@@ -26,7 +26,7 @@ END_DATE   = datetime.today().strftime("%Y-%m-%d")
 
 def fetch_stock(ticker: str, start: str = START_DATE, end: str = END_DATE) -> pd.DataFrame:
     """Download OHLCV data for a single ticker."""
-    print(f"[fetch] Downloading {ticker} ({start} → {end}) ...")
+    print(f"[fetch] Downloading {ticker} ({start} -> {end}) ...")
     df = yf.download(ticker, start=start, end=end, auto_adjust=True, progress=False)
     if df.empty:
         raise ValueError(f"No data returned for {ticker}")
@@ -46,7 +46,7 @@ def save_stock(ticker: str, df: pd.DataFrame) -> str:
     os.makedirs(DATA_DIR, exist_ok=True)
     path = os.path.join(DATA_DIR, f"{ticker}.csv")
     df.to_csv(path)
-    print(f"[fetch] Saved {len(df)} rows → {path}")
+    print(f"[fetch] Saved {len(df)} rows -> {path}")
     return path
 
 
